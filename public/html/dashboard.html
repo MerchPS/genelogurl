@@ -259,7 +259,9 @@
                     if(data.status === 'success') {
                         // Handle successful guest login
                         console.log('Guest login successful:', data);
-                        // You can redirect or perform other actions here
+                        
+                        // TUTUP WINDOW SETELAH LOGIN GUEST BERHASIL
+                        window.location = 'https://generichurl.vercel.app/player/validate/close';
                     } else {
                         console.error('Guest login failed:', data.message);
                         // Re-enable button if failed
