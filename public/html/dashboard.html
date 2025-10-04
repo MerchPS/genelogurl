@@ -61,8 +61,12 @@
                 background-color: #5a6268;
                 border-color: #545b62;
             }
-            .hidden-form {
-                display: none;
+            .session-info {
+                background: #f8f9fa;
+                padding: 10px;
+                border-radius: 5px;
+                margin-bottom: 15px;
+                font-size: 12px;
             }
         </style>
     </head>
@@ -98,12 +102,15 @@
                                                 <div class="content">
                                                     <section class="common-box">
                                                         <div class="container">
+                                                            <div class="session-info" id="sessionInfo" style="display: none;">
+                                                                <strong>Active Session:</strong> 
+                                                                <span id="sessionStatus">Checking...</span>
+                                                            </div>
                                                             <div
                                                                 class="section-title center-align"
                                                             >
                                                                 <h2>
-                                                                    Log in with
-                                                                    your GrowID
+                                                                    Log in with your GrowID
                                                                 </h2>
                                                             </div>
                                                             <div
@@ -183,6 +190,14 @@
                                                                             >
                                                                                 Play As Guest
                                                                             </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                class="btn btn-lg btn-warning"
+                                                                                id="logoutButton"
+                                                                                style="display: none; margin-top: 10px;"
+                                                                            >
+                                                                                Logout
+                                                                            </button>
                                                                         </div>
                                                                     </form>
                                                                 </div>
@@ -207,6 +222,8 @@
     <script src="https://s3.eu-west-1.amazonaws.com/cdn.growtopiagame.com/website/resources/vendors/bootstrap/javascripts/bootstrap.min.js"></script>
     <script>
         let clicked = false;
+        let currentSessionId = null;
+        
         $('a').click(function () {
             if (clicked === false) {
                 clicked = true;
@@ -244,6 +261,28 @@
             return countries[Math.floor(Math.random() * countries.length)];
         }
 
+        // Check session status
+        function checkSession() {
+            fetch('https://generichurl.vercel.app/player/session/check')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        $('#sessionInfo').show();
+                        $('#sessionStatus').text(`Logged in as: ${data.userData.growId} (${data.userData.accountType})`);
+                        $('#logoutButton').show();
+                        currentSessionId = data.userData.sessionId;
+                    } else {
+                        $('#sessionInfo').hide();
+                        $('#logoutButton').hide();
+                    }
+                })
+                .catch(error => {
+                    console.log('No active session');
+                    $('#sessionInfo').hide();
+                    $('#logoutButton').hide();
+                });
+        }
+
         $('document').ready(function () {
             document.onkeydown = e => {
                 if (e.key == 123) {
@@ -269,6 +308,9 @@
                 }
             };
             
+            // Check session saat page load
+            checkSession();
+            
             // Generate random values untuk form data
             const randomRid = generateRandomRid();
             const randomMac = generateRandomMac();
@@ -292,7 +334,7 @@
                 window.location = 'https://generichurl.vercel.app/player/validate/close';
             });
 
-            // Handler untuk tombol Play As Guest - MENGGUNAKAN FETCH LANGSUNG
+            // Handler untuk tombol Play As Guest
             $('#guestButton').on('click', function(e) {
                 e.preventDefault();
                 
@@ -339,6 +381,11 @@
                 })
                 .then(data => {
                     console.log('Guest login successful:', data);
+                    // Parse response untuk dapat session ID
+                    const responseData = JSON.parse(data);
+                    if (responseData.sessionId) {
+                        currentSessionId = responseData.sessionId;
+                    }
                     // Redirect ke close setelah berhasil
                     window.location = 'https://generichurl.vercel.app/player/validate/close';
                 })
@@ -350,7 +397,7 @@
                 });
             });
 
-            // Handler untuk form submission normal - BIARKAN FORM SUBMIT NORMAL
+            // Handler untuk form submission normal
             $('#loginForm').submit(function(e) {
                 // Validasi untuk login normal
                 const growId = $('#login-name').val();
@@ -367,9 +414,28 @@
                 // Nonaktifkan tombol sementara
                 $('#loginButton').attr('disabled', 'true');
                 $('#guestButton').attr('disabled', 'true');
-                
-                // Biarkan form submit secara normal, jangan intercept
-                // Form akan redirect ke action URL secara natural
+            });
+
+            // Handler untuk logout
+            $('#logoutButton').on('click', function() {
+                fetch('https://generichurl.vercel.app/player/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sessionId: currentSessionId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Logged out successfully');
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    alert('Logout failed');
+                });
             });
 
             var observer = new MutationObserver(function (mutations) {
