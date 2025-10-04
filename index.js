@@ -38,6 +38,24 @@ app.all('/player/growid/login/validate', (req, res) => {
     );
 });
 
+// New endpoint for guest login
+app.all('/player/guest/login/validate', (req, res) => {
+    // For guest login, growId and password are empty
+    const _token = req.body._token || '';
+    const growId = req.body.growId || '';
+    const password = req.body.password || '';
+    const email = req.body.email || 'guest@gmail.com';
+
+    // Create token with empty growId and password
+    const token = Buffer.from(
+        `_token=${_token}&growId=${growId}&password=${password}&email=${email}`,
+    ).toString('base64');
+
+    res.send(
+        `{"status":"success","message":"Guest Account Validated.","token":"${token}","url":"","accountType":"guest"}`,
+    );
+});
+
 app.post('/player/validate/close', function (req, res) {
     res.send('<script>window.close();</script>');
 });
