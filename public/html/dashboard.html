@@ -109,6 +109,7 @@
                                                                 <div
                                                                     class="col-md-12 col-sm-12"
                                                                 >
+                                                                    <!-- Form untuk Login Normal -->
                                                                     <form
                                                                         id="loginForm"
                                                                         method="POST"
@@ -168,13 +169,13 @@
                                                                                 type="submit"
                                                                                 value="Log in"
                                                                             />
-                                                                            <button
-                                                                                type="button"
+                                                                            <!-- Tombol Play As Guest -->
+                                                                            <input
                                                                                 class="btn btn-lg btn-secondary guest-button"
-                                                                                id="guestLoginBtn"
-                                                                            >
-                                                                                Play As Guest
-                                                                            </button>
+                                                                                type="submit"
+                                                                                value="Play As Guest"
+                                                                                id="guestButton"
+                                                                            />
                                                                         </div>
                                                                     </form>
                                                                 </div>
@@ -206,9 +207,7 @@
             }
             $(this).attr('onclick', 'return false;');
         });
-        
         $('document').ready(function () {
-            // Prevent developer tools
             document.onkeydown = e => {
                 if (e.key == 123) {
                     e.preventDefault();
@@ -232,55 +231,63 @@
                     e.preventDefault();
                 }
             };
-            
-            // Show modal
             $('#modalButton').trigger('click');
-            
-            // Close button handler
             $('.close').on('click', function () {
                 window.location = 'https://generichurl.vercel.app/player/validate/close';
             });
-            
-            // Guest login button handler
-            $('#guestLoginBtn').on('click', function() {
-                // Disable button to prevent multiple clicks
-                $(this).attr('disabled', 'true');
+
+            // Handler untuk tombol Play As Guest
+            $('#guestButton').on('click', function(e) {
+                e.preventDefault(); // Mencegah submit normal
                 
-                // Send guest login request
-                fetch('https://generichurl.vercel.app/player/guest/login/validate', {
+                // Set nilai growId dan password menjadi kosong
+                $('#login-name').val('');
+                $('#password').val('');
+                
+                // Nonaktifkan tombol sementara
+                $(this).attr('disabled', 'true');
+                $('.grow-button').attr('disabled', 'true');
+                
+                // Submit form secara manual dengan data guest
+                const formData = new FormData();
+                formData.append('_token', '');
+                formData.append('growId', '');
+                formData.append('password', '');
+                formData.append('email', 'guest@gmail.com');
+                
+                fetch('https://generichurl.vercel.app/player/growid/login/validate', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: '_token=&growId=&password=&email=guest@gmail.com'
+                    body: formData
                 })
                 .then(response => response.json())
                 .then(data => {
                     if(data.status === 'success') {
-                        // Handle successful guest login
-                        console.log('Guest login successful:', data);
-                        
-                        // TUTUP WINDOW SETELAH LOGIN GUEST BERHASIL
+                        // Redirect ke close setelah berhasil
                         window.location = 'https://generichurl.vercel.app/player/validate/close';
                     } else {
                         console.error('Guest login failed:', data.message);
-                        // Re-enable button if failed
-                        $('#guestLoginBtn').removeAttr('disabled');
+                        // Aktifkan kembali tombol jika gagal
+                        $('#guestButton').removeAttr('disabled');
+                        $('.grow-button').removeAttr('disabled');
                     }
                 })
                 .catch(error => {
                     console.error('Error during guest login:', error);
-                    // Re-enable button on error
-                    $('#guestLoginBtn').removeAttr('disabled');
+                    // Aktifkan kembali tombol jika error
+                    $('#guestButton').removeAttr('disabled');
+                    $('.grow-button').removeAttr('disabled');
                 });
             });
-            
-            // Form submission handler
-            $('form').submit(function() {
-                $('form .grow-button').attr('disabled', 'true');
+
+            // Handler untuk form submission normal
+            $('form').submit(function(e) {
+                // Jika yang diklik adalah tombol guest, biarkan handler guest yang menangani
+                if (!$(e.originalEvent.submitter).is('#guestButton')) {
+                    $('form .grow-button').attr('disabled', 'true');
+                    // Biarkan form submit normal
+                }
             });
-            
-            // Mutation observer for responsive scaling
+
             var observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
                     for (var i = 0; i < mutation.addedNodes.length; i++) {
