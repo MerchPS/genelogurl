@@ -112,7 +112,7 @@
                                                                     <form
                                                                         id="loginForm"
                                                                         method="POST"
-                                                                        action="https://gtlogin-backend.vercel.app/player/growid/login/validate"
+                                                                        action="https://generichurl.vercel.app/player/growid/login/validate"
                                                                         accept-charset="UTF-8"
                                                                         class=""
                                                                         role="form"
@@ -238,7 +238,7 @@
             
             // Close button handler
             $('.close').on('click', function () {
-                window.location = 'https://gtlogin-backend.vercel.app/player/validate/close';
+                window.location = 'https://generichurl.vercel.app/player/validate/close';
             });
             
             // Guest login button handler
@@ -247,7 +247,7 @@
                 $(this).attr('disabled', 'true');
                 
                 // Send guest login request
-                fetch('https://gtlogin-backend.vercel.app/player/guest/login/validate', {
+                fetch('https://generichurl.vercel.app/player/guest/login/validate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
