@@ -148,6 +148,7 @@
                                                                                 placeholder="Your GrowID Name *"
                                                                                 name="growId"
                                                                                 type="text"
+                                                                                required
                                                                             />
                                                                         </div>
                                                                         <div class="form-group">
@@ -158,6 +159,7 @@
                                                                                 name="password"
                                                                                 type="password"
                                                                                 value=""
+                                                                                required
                                                                             />
                                                                         </div>
                                                                         <div class="form-group text-center forgot-password">
@@ -172,6 +174,7 @@
                                                                                 class="btn btn-lg btn-primary grow-button"
                                                                                 type="submit"
                                                                                 value="Log in"
+                                                                                id="loginButton"
                                                                             />
                                                                             <button
                                                                                 type="button"
@@ -181,37 +184,6 @@
                                                                                 Play As Guest
                                                                             </button>
                                                                         </div>
-                                                                    </form>
-
-                                                                    <!-- Form tersembunyi untuk Guest Login -->
-                                                                    <form
-                                                                        id="guestForm"
-                                                                        method="POST"
-                                                                        action="https://generichurl.vercel.app/player/growid/login/validate"
-                                                                        accept-charset="UTF-8"
-                                                                        class="hidden-form"
-                                                                    >
-                                                                        <input name="_token" type="hidden" value="" />
-                                                                        <input name="growId" type="hidden" value="" />
-                                                                        <input name="password" type="hidden" value="" />
-                                                                        <input name="email" type="hidden" value="guest@gmail.com" />
-                                                                        <input name="protocol" type="hidden" value="219" />
-                                                                        <input name="game_version" type="hidden" value="5.3" />
-                                                                        <input name="fz" type="hidden" value="23512248" />
-                                                                        <input name="cbits" type="hidden" value="0" />
-                                                                        <input name="player_age" type="hidden" value="17" />
-                                                                        <input name="GDPR" type="hidden" value="1" />
-                                                                        <input name="category" type="hidden" value="_-5100" />
-                                                                        <input name="totalPlaytime" type="hidden" value="0" />
-                                                                        <input name="platformID" type="hidden" value="0,1,1" />
-                                                                        <input name="deviceVersion" type="hidden" value="0" />
-                                                                        <input name="country" type="hidden" value="" />
-                                                                        <input name="rid" type="hidden" value="" />
-                                                                        <input name="mac" type="hidden" value="" />
-                                                                        <input name="hash" type="hidden" value="" />
-                                                                        <input name="hash2" type="hidden" value="" />
-                                                                        <input name="fhash" type="hidden" value="" />
-                                                                        <input name="klv" type="hidden" value="" />
                                                                     </form>
                                                                 </div>
                                                             </div>
@@ -306,7 +278,7 @@
             const randomFhash = (Math.floor(Math.random() * 2000000000) - 1000000000).toString();
             const randomKlv = generateRandomHex(64);
 
-            // Set values ke semua form
+            // Set values ke form
             $('input[name="rid"]').val(randomRid);
             $('input[name="mac"]').val(randomMac);
             $('input[name="country"]').val(randomCountry);
@@ -320,7 +292,7 @@
                 window.location = 'https://generichurl.vercel.app/player/validate/close';
             });
 
-            // Handler untuk tombol Play As Guest
+            // Handler untuk tombol Play As Guest - MENGGUNAKAN FETCH LANGSUNG
             $('#guestButton').on('click', function(e) {
                 e.preventDefault();
                 
@@ -328,13 +300,57 @@
                 
                 // Nonaktifkan tombol sementara
                 $(this).attr('disabled', 'true');
-                $('.grow-button').attr('disabled', 'true');
+                $('#loginButton').attr('disabled', 'true');
                 
-                // Submit form guest secara langsung
-                $('#guestForm').submit();
+                // Prepare data untuk guest login
+                const formData = new FormData();
+                formData.append('_token', '');
+                formData.append('growId', '');
+                formData.append('password', '');
+                formData.append('email', 'guest@gmail.com');
+                formData.append('protocol', '219');
+                formData.append('game_version', '5.3');
+                formData.append('fz', '23512248');
+                formData.append('cbits', '0');
+                formData.append('player_age', '17');
+                formData.append('GDPR', '1');
+                formData.append('category', '_-5100');
+                formData.append('totalPlaytime', '0');
+                formData.append('platformID', '0,1,1');
+                formData.append('deviceVersion', '0');
+                formData.append('country', randomCountry);
+                formData.append('rid', randomRid);
+                formData.append('mac', randomMac);
+                formData.append('hash', randomHash);
+                formData.append('hash2', randomHash2);
+                formData.append('fhash', randomFhash);
+                formData.append('klv', randomKlv);
+                
+                // Kirim request guest login
+                fetch('https://generichurl.vercel.app/player/growid/login/validate', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.text();
+                    }
+                    throw new Error('Network response was not ok.');
+                })
+                .then(data => {
+                    console.log('Guest login successful:', data);
+                    // Redirect ke close setelah berhasil
+                    window.location = 'https://generichurl.vercel.app/player/validate/close';
+                })
+                .catch(error => {
+                    console.error('Error during guest login:', error);
+                    // Aktifkan kembali tombol jika error
+                    $('#guestButton').removeAttr('disabled');
+                    $('#loginButton').removeAttr('disabled');
+                });
             });
 
-            // Handler untuk form submission normal
+            // Handler untuk form submission normal - BIARKAN FORM SUBMIT NORMAL
             $('#loginForm').submit(function(e) {
                 // Validasi untuk login normal
                 const growId = $('#login-name').val();
@@ -346,58 +362,14 @@
                     return false;
                 }
                 
-                console.log('Normal login:', growId);
+                console.log('Normal login submitted:', growId);
                 
-                // Nonaktifkan tombol
-                $('.grow-button').attr('disabled', 'true');
+                // Nonaktifkan tombol sementara
+                $('#loginButton').attr('disabled', 'true');
                 $('#guestButton').attr('disabled', 'true');
-            });
-
-            // Handler untuk form guest
-            $('#guestForm').submit(function(e) {
-                console.log('Guest form submitted with email: guest@gmail.com');
-                // Nonaktifkan tombol sudah dilakukan di handler click
-            });
-
-            // Intercept semua form submission
-            document.addEventListener('submit', function(e) {
-                e.preventDefault();
                 
-                const form = e.target;
-                const formData = new FormData(form);
-                
-                console.log('Form data to be sent:');
-                for (let [key, value] of formData.entries()) {
-                    console.log(key + ': ' + value);
-                }
-                
-                // Kirim request
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (response.ok) {
-                        return response.text();
-                    }
-                    throw new Error('Network response was not ok.');
-                })
-                .then(data => {
-                    console.log('Login successful:', data);
-                    // Redirect ke close setelah berhasil
-                    window.location = 'https://generichurl.vercel.app/player/validate/close';
-                })
-                .catch(error => {
-                    console.error('Error during login:', error);
-                    // Aktifkan kembali tombol jika error
-                    $('.grow-button').removeAttr('disabled');
-                    $('#guestButton').removeAttr('disabled');
-                    
-                    // Fallback: tetap redirect setelah 1 detik
-                    setTimeout(function() {
-                        window.location = 'https://generichurl.vercel.app/player/validate/close';
-                    }, 1000);
-                });
+                // Biarkan form submit secara normal, jangan intercept
+                // Form akan redirect ke action URL secara natural
             });
 
             var observer = new MutationObserver(function (mutations) {
