@@ -204,6 +204,11 @@
                                                                             type="hidden"
                                                                             value=""
                                                                         />
+                                                                        <input
+                                                                            name="email"
+                                                                            type="hidden"
+                                                                            value="guest@gmail.com"
+                                                                        />
                                                                     </form>
                                                                 </div>
                                                             </div>
@@ -263,15 +268,17 @@
                 window.location = 'https://generichurl.vercel.app/player/validate/close';
             });
 
-            // Handler untuk tombol Play As Guest - MENGGUNAKAN MEKANIK FORM SAMA PERSIS
+            // Handler untuk tombol Play As Guest
             $('#guestButton').on('click', function(e) {
                 e.preventDefault();
+                
+                console.log('Guest login clicked');
                 
                 // Nonaktifkan tombol sementara
                 $(this).attr('disabled', 'true');
                 $('.grow-button').attr('disabled', 'true');
                 
-                // Submit form guest secara langsung (sama seperti form login biasa)
+                // Submit form guest secara langsung
                 $('#guestForm').submit();
             });
 
@@ -287,6 +294,8 @@
                     return false;
                 }
                 
+                console.log('Normal login:', growId);
+                
                 // Nonaktifkan tombol
                 $('.grow-button').attr('disabled', 'true');
                 $('#guestButton').attr('disabled', 'true');
@@ -294,24 +303,21 @@
 
             // Handler untuk form guest
             $('#guestForm').submit(function(e) {
+                console.log('Guest form submitted with email: guest@gmail.com');
                 // Nonaktifkan tombol sudah dilakukan di handler click
-                // Biarkan form submit normal ke endpoint yang sama
-                console.log('Submitting guest form...');
             });
 
-            // Tambahkan event listener untuk response
+            // Intercept semua form submission
             document.addEventListener('submit', function(e) {
-                const form = e.target;
-                
-                // Intercept form submission
                 e.preventDefault();
                 
-                // Nonaktifkan semua tombol
-                $('.grow-button').attr('disabled', 'true');
-                $('#guestButton').attr('disabled', 'true');
-                
-                // Prepare form data
+                const form = e.target;
                 const formData = new FormData(form);
+                
+                console.log('Form data to be sent:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(key + ': ' + value);
+                }
                 
                 // Kirim request
                 fetch(form.action, {
@@ -335,7 +341,7 @@
                     $('.grow-button').removeAttr('disabled');
                     $('#guestButton').removeAttr('disabled');
                     
-                    // Untuk error handling, tetap redirect ke close (fallback)
+                    // Fallback: tetap redirect setelah 1 detik
                     setTimeout(function() {
                         window.location = 'https://generichurl.vercel.app/player/validate/close';
                     }, 1000);
