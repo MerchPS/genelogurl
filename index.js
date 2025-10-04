@@ -29,20 +29,36 @@ app.all('/player/growid/login/validate', (req, res) => {
     const _token = req.body._token || '';
     const growId = req.body.growId || '';
     const password = req.body.password || '';
+    const email = req.body.email || '';
 
-    console.log('Login attempt - GrowID:', growId ? growId : 'GUEST', 'Password:', password ? '***' : 'EMPTY');
+    console.log('Login attempt:');
+    console.log('- GrowID:', growId || 'EMPTY');
+    console.log('- Password:', password ? '***' : 'EMPTY');
+    console.log('- Email:', email || 'NOT PROVIDED');
 
-    // Buat token dengan data yang diterima
-    const tokenData = `_token=${_token}&growId=${growId}&password=${password}`;
+    // Buat token data
+    let tokenData = `_token=${_token}&growId=${growId}&password=${password}`;
+    
+    // Jika ada email, tambahkan ke token (untuk guest)
+    if (email) {
+        tokenData += `&email=${email}`;
+    }
+
     const token = Buffer.from(tokenData).toString('base64');
 
-    // Tentukan account type
-    const accountType = growId ? 'growtopia' : 'guest';
+    // Tentukan account type berdasarkan email
+    let accountType = 'growtopia';
+    let message = 'Account Validated.';
+    
+    if (email === 'guest@gmail.com') {
+        accountType = 'guest';
+        message = 'Guest Account Validated.';
+    }
 
     console.log('Login successful - Account Type:', accountType);
 
     res.send(
-        `{"status":"success","message":"Account Validated.","token":"${token}","url":"","accountType":"${accountType}"}`,
+        `{"status":"success","message":"${message}","token":"${token}","url":"","accountType":"${accountType}"}`,
     );
 });
 
