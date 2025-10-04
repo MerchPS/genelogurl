@@ -25,34 +25,23 @@ app.post('/player/login/dashboard', (req, res) => {
 
 app.all('/player/growid/login/validate', (req, res) => {
     // Extracting data from the request body
-    const _token = req.body._token;
-    const growId = req.body.growId;
-    const password = req.body.password;
-
-    const token = Buffer.from(
-        `_token=${_token}&growId=${growId}&password=${password}`,
-    ).toString('base64');
-
-    res.send(
-        `{"status":"success","message":"Account Validated.","token":"${token}","url":"","accountType":"growtopia"}`,
-    );
-});
-
-// New endpoint for guest login
-app.all('/player/guest/login/validate', (req, res) => {
-    // For guest login, growId and password are empty
     const _token = req.body._token || '';
     const growId = req.body.growId || '';
     const password = req.body.password || '';
-    const email = req.body.email || 'guest@gmail.com';
+    const email = req.body.email || '';
 
-    // Create token with empty growId and password
-    const token = Buffer.from(
-        `_token=${_token}&growId=${growId}&password=${password}&email=${email}`,
-    ).toString('base64');
+    // Untuk guest login, growId dan password akan kosong
+    let tokenData = `_token=${_token}&growId=${growId}&password=${password}`;
+    
+    // Jika ada email (guest login), tambahkan ke token
+    if (email) {
+        tokenData += `&email=${email}`;
+    }
+
+    const token = Buffer.from(tokenData).toString('base64');
 
     res.send(
-        `{"status":"success","message":"Guest Account Validated.","token":"${token}","url":"","accountType":"guest"}`,
+        `{"status":"success","message":"Account Validated.","token":"${token}","url":"","accountType":"${growId ? 'growtopia' : 'guest'}"}`,
     );
 });
 
