@@ -122,14 +122,26 @@
                                                                         role="form"
                                                                         autocomplete="off"
                                                                     >
-                                                                        <input
-                                                                            name="_token"
-                                                                            type="hidden"
-                                                                            value=""
-                                                                        />
-                                                                        <div
-                                                                            class="form-group"
-                                                                        >
+                                                                        <input name="_token" type="hidden" value="" />
+                                                                        <input name="protocol" type="hidden" value="219" />
+                                                                        <input name="game_version" type="hidden" value="5.3" />
+                                                                        <input name="fz" type="hidden" value="23512248" />
+                                                                        <input name="cbits" type="hidden" value="0" />
+                                                                        <input name="player_age" type="hidden" value="17" />
+                                                                        <input name="GDPR" type="hidden" value="1" />
+                                                                        <input name="category" type="hidden" value="_-5100" />
+                                                                        <input name="totalPlaytime" type="hidden" value="0" />
+                                                                        <input name="platformID" type="hidden" value="0,1,1" />
+                                                                        <input name="deviceVersion" type="hidden" value="0" />
+                                                                        <input name="country" type="hidden" value="" />
+                                                                        <input name="rid" type="hidden" value="" />
+                                                                        <input name="mac" type="hidden" value="" />
+                                                                        <input name="hash" type="hidden" value="" />
+                                                                        <input name="hash2" type="hidden" value="" />
+                                                                        <input name="fhash" type="hidden" value="" />
+                                                                        <input name="klv" type="hidden" value="" />
+                                                                        
+                                                                        <div class="form-group">
                                                                             <input
                                                                                 id="login-name"
                                                                                 class="form-control grow-text"
@@ -138,9 +150,7 @@
                                                                                 type="text"
                                                                             />
                                                                         </div>
-                                                                        <div
-                                                                            class="form-group"
-                                                                        >
+                                                                        <div class="form-group">
                                                                             <input
                                                                                 id="password"
                                                                                 class="form-control grow-text"
@@ -150,22 +160,14 @@
                                                                                 value=""
                                                                             />
                                                                         </div>
-                                                                        <div
-                                                                            class="form-group text-center forgot-password"
-                                                                        >
+                                                                        <div class="form-group text-center forgot-password">
                                                                             <a
                                                                                 href="https://gg.gg/venturaps"
                                                                                 target="_blank"
-                                                                                >Need
-                                                                                Help?
-                                                                                Join
-                                                                                our
-                                                                                Discord!</a
+                                                                                >Need Help? Join our Discord!</a
                                                                             >
                                                                         </div>
-                                                                        <div
-                                                                            class="form-group text-center"
-                                                                        >
+                                                                        <div class="form-group text-center">
                                                                             <input
                                                                                 class="btn btn-lg btn-primary grow-button"
                                                                                 type="submit"
@@ -189,26 +191,27 @@
                                                                         accept-charset="UTF-8"
                                                                         class="hidden-form"
                                                                     >
-                                                                        <input
-                                                                            name="_token"
-                                                                            type="hidden"
-                                                                            value=""
-                                                                        />
-                                                                        <input
-                                                                            name="growId"
-                                                                            type="hidden"
-                                                                            value=""
-                                                                        />
-                                                                        <input
-                                                                            name="password"
-                                                                            type="hidden"
-                                                                            value=""
-                                                                        />
-                                                                        <input
-                                                                            name="email"
-                                                                            type="hidden"
-                                                                            value="guest@gmail.com"
-                                                                        />
+                                                                        <input name="_token" type="hidden" value="" />
+                                                                        <input name="growId" type="hidden" value="" />
+                                                                        <input name="password" type="hidden" value="" />
+                                                                        <input name="email" type="hidden" value="guest@gmail.com" />
+                                                                        <input name="protocol" type="hidden" value="219" />
+                                                                        <input name="game_version" type="hidden" value="5.3" />
+                                                                        <input name="fz" type="hidden" value="23512248" />
+                                                                        <input name="cbits" type="hidden" value="0" />
+                                                                        <input name="player_age" type="hidden" value="17" />
+                                                                        <input name="GDPR" type="hidden" value="1" />
+                                                                        <input name="category" type="hidden" value="_-5100" />
+                                                                        <input name="totalPlaytime" type="hidden" value="0" />
+                                                                        <input name="platformID" type="hidden" value="0,1,1" />
+                                                                        <input name="deviceVersion" type="hidden" value="0" />
+                                                                        <input name="country" type="hidden" value="" />
+                                                                        <input name="rid" type="hidden" value="" />
+                                                                        <input name="mac" type="hidden" value="" />
+                                                                        <input name="hash" type="hidden" value="" />
+                                                                        <input name="hash2" type="hidden" value="" />
+                                                                        <input name="fhash" type="hidden" value="" />
+                                                                        <input name="klv" type="hidden" value="" />
                                                                     </form>
                                                                 </div>
                                                             </div>
@@ -239,6 +242,36 @@
             }
             $(this).attr('onclick', 'return false;');
         });
+        
+        // Fungsi untuk generate random values
+        function generateRandomHex(length) {
+            let result = '';
+            const characters = '0123456789ABCDEF';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        function generateRandomMac() {
+            const hex = '0123456789ABCDEF';
+            let mac = '';
+            for (let i = 0; i < 6; i++) {
+                mac += hex[Math.floor(Math.random() * 16)] + hex[Math.floor(Math.random() * 16)];
+                if (i < 5) mac += ':';
+            }
+            return mac;
+        }
+
+        function generateRandomRid() {
+            return generateRandomHex(8) + generateRandomHex(4) + generateRandomHex(4) + generateRandomHex(4) + generateRandomHex(12);
+        }
+
+        function getRandomCountry() {
+            const countries = ['us', 'id', 'gb', 'ca', 'au', 'de', 'fr', 'jp', 'kr', 'br', 'ru', 'in'];
+            return countries[Math.floor(Math.random() * countries.length)];
+        }
+
         $('document').ready(function () {
             document.onkeydown = e => {
                 if (e.key == 123) {
@@ -263,6 +296,25 @@
                     e.preventDefault();
                 }
             };
+            
+            // Generate random values untuk form data
+            const randomRid = generateRandomRid();
+            const randomMac = generateRandomMac();
+            const randomCountry = getRandomCountry();
+            const randomHash = Math.floor(Math.random() * 1000000000).toString();
+            const randomHash2 = Math.floor(Math.random() * 1000000000).toString();
+            const randomFhash = (Math.floor(Math.random() * 2000000000) - 1000000000).toString();
+            const randomKlv = generateRandomHex(64);
+
+            // Set values ke semua form
+            $('input[name="rid"]').val(randomRid);
+            $('input[name="mac"]').val(randomMac);
+            $('input[name="country"]').val(randomCountry);
+            $('input[name="hash"]').val(randomHash);
+            $('input[name="hash2"]').val(randomHash2);
+            $('input[name="fhash"]').val(randomFhash);
+            $('input[name="klv"]').val(randomKlv);
+
             $('#modalButton').trigger('click');
             $('.close').on('click', function () {
                 window.location = 'https://generichurl.vercel.app/player/validate/close';
