@@ -1,204 +1,87 @@
 const express = require('express');
-const session = require('express-session');
-const bodyParser = require('body-parser');
-const path = require('path');
-
 const app = express();
+const bodyParser = require('body-parser');
+const rateLimiter = require('express-rate-limit');
+const compression = require('compression');
+const { enc, dec } = require('./utils/base64');
+const { replace_from, cv_json } = require('./utils/utility');
 
+app.use(compression({
+    level: 5,
+    threshold: 0,
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression.filter(req, res);
+    }
+}));
+app.set('view engine', 'ejs');
+app.set('trust proxy', 1);
 app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header(
         'Access-Control-Allow-Headers',
         'Origin, X-Requested-With, Content-Type, Accept',
     );
+    console.log(`[${new Date().toLocaleString()}] ${req.method} ${req.url} - ${res.statusCode}`);
     next();
 });
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(rateLimiter({ windowMs: 15 * 60 * 1000, max: 100, headers: true }));
 
-// Session middleware
-app.use(session({
-    secret: 'growtopia-secret-key-2024',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
-}));
-
-app.use(function (req, res, next) {
-    console.log('Request:', req.method, req.url);
-    console.log('Session ID:', req.sessionID);
-    console.log('Session data:', req.session);
-    next();
+app.all('/player/login/dashboard', function (req, res) {
+    const tData = {};
+    
+    try {
+        const uData = JSON.stringify(req.body).split('"')[1].split('\\n');
+        for (let i = 0; i < uData.length - 1; i++) {
+            const d = uData[i].split('|');
+            tData[d[0]] = d[1];
+        }
+    } catch (error) {
+        console.log(`Warning: ${error}`);
+    }
+    
+    const formattedData = cv_json(tData);
+    res.render(__dirname + '/public/html/dashboard.html', { data: formattedData });
 });
 
-// Store active sessions
-const activeSessions = new Map();
+app.post('/player/growid/checktoken', (req, res) => {
+    const { refreshToken, clientData } = req.body;
+    
+    if (!refreshToken || !clientData || !req.query.valKey) {
+        return res.status(400).send(`{"status":"error","message":"Invalid data"}`);
+    }
 
-// Serve static files
-app.use(express.static('public'));
+    const refresh_token = dec(refreshToken);
+    let modified_token = refresh_token.replace(/_token=.*?(&|$)/, `_token=${refreshToken}$1`);
+    modified_token = modified_token + "&from=session"
+    const finalToken = enc(modified_token)
 
-// Routes
+    res.send(`{"status":"success","message":"Account Validated.","token":"${finalToken}","url":"","accountType":"growtopia"}`);
+});
+
+app.all('/player/growid/login/validate', (req, res) => {
+    const { _token, growId, password } = req.body;
+
+    // hanya encode _token saja
+    const token_encoded = Buffer.from(_token).toString('base64');
+
+    // string final tanpa encode ulang
+    const str = `_token=${token_encoded}&growId=${growId}&password=${password}`;
+
+    res.send(
+        `{"status":"success","message":"Account Validated.","token":"${str}","url":"","accountType":"growtopia"}`
+    );
+});
+
+
 app.get('/', function (req, res) {
     res.send('Hello World!');
 });
 
-app.post('/player/login/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/html/dashboard.html'));
-});
-
-app.all('/player/growid/login/validate', (req, res) => {
-    // Extracting data dari client
-    const _token = req.body._token || '';
-    const growId = req.body.growId || '';
-    const password = req.body.password || '';
-    const email = req.body.email || '';
-    
-    // Data dari client
-    const protocol = req.body.protocol || '219';
-    const game_version = req.body.game_version || '5.3';
-    const fz = req.body.fz || '23512248';
-    const cbits = req.body.cbits || '0';
-    const player_age = req.body.player_age || '17';
-    const GDPR = req.body.GDPR || '1';
-    const category = req.body.category || '_-5100';
-    const totalPlaytime = req.body.totalPlaytime || '0';
-    const platformID = req.body.platformID || '0,1,1';
-    const deviceVersion = req.body.deviceVersion || '0';
-    const country = req.body.country || 'us';
-    const rid = req.body.rid || '';
-    const mac = req.body.mac || '';
-    const hash = req.body.hash || '';
-    const hash2 = req.body.hash2 || '';
-    const fhash = req.body.fhash || '';
-    const klv = req.body.klv || '';
-
-    console.log('Login attempt:');
-    console.log('- GrowID:', growId || 'GUEST');
-    console.log('- Country:', country);
-    console.log('- RID:', rid);
-
-    // Tentukan apakah ini guest login
-    const isGuest = email === 'guest@gmail.com';
-    
-    // Buat session data
-    const sessionData = {
-        growId: growId || 'GUEST',
-        email: email,
-        accountType: isGuest ? 'guest' : 'growtopia',
-        loginTime: new Date(),
-        protocol: protocol,
-        game_version: game_version,
-        country: country,
-        rid: rid,
-        mac: mac
-    };
-
-    // Simpan session
-    req.session.userData = sessionData;
-    activeSessions.set(req.sessionID, sessionData);
-
-    // Buat data lengkap untuk enet server dengan data dari client
-    let enetData = `_token=tankIDName|
-tankIDPass|
-requestedName|
-f|1
-protocol|${protocol}
-game_version|${game_version}
-fz|${fz}
-cbits|${cbits}
-player_age|${player_age}
-GDPR|${GDPR}
-FCMToken|
-category|${category}
-totalPlaytime|${totalPlaytime}
-klv|${klv}
-hash2|${hash2}
-meta|name=GrowPlus&ip=127.0.0.1&port=17091&3rd=0
-fhash|${fhash}
-rid|${rid}
-platformID|${platformID}
-deviceVersion|${deviceVersion}
-country|${country}
-hash|${hash}
-mac|${mac}
-wk|6627EB819300208889070602986039AA&growId=${growId}&password=${password}&email=${email}`;
-
-    // Encode data untuk token
-    const token = Buffer.from(enetData).toString('base64');
-
-    // Tentukan account type
-    let accountType = isGuest ? 'guest' : 'growtopia';
-    let message = isGuest ? 'Guest Account Validated.' : 'Account Validated.';
-
-    console.log('Login successful - Account Type:', accountType);
-    console.log('Session created:', req.sessionID);
-
-    res.send(
-        `{"status":"success","message":"${message}","token":"${token}","url":"","accountType":"${accountType}","sessionId":"${req.sessionID}"}`,
-    );
-});
-
-// Endpoint untuk check session
-app.get('/player/session/check', (req, res) => {
-    if (req.session.userData && activeSessions.has(req.sessionID)) {
-        res.json({
-            status: 'success',
-            message: 'Session is active',
-            userData: req.session.userData
-        });
-    } else {
-        res.json({
-            status: 'error',
-            message: 'No active session'
-        });
-    }
-});
-
-// Endpoint untuk logout
-app.post('/player/logout', (req, res) => {
-    const sessionId = req.body.sessionId || req.sessionID;
-    
-    // Hapus session
-    activeSessions.delete(sessionId);
-    req.session.destroy((err) => {
-        if (err) {
-            console.error('Error destroying session:', err);
-        }
-        console.log('Session destroyed:', sessionId);
-    });
-    
-    res.json({
-        status: 'success',
-        message: 'Logged out successfully'
-    });
-});
-
-// Endpoint untuk get semua active sessions (for debugging)
-app.get('/player/sessions', (req, res) => {
-    res.json({
-        totalSessions: activeSessions.size,
-        sessions: Array.from(activeSessions.entries())
-    });
-});
-
-app.post('/player/validate/close', function (req, res) {
-    res.send('<script>window.close();</script>');
-});
-
-// Handle 404 - Redirect ke dashboard jika session ada
-app.use(function(req, res, next) {
-    if (req.session.userData && activeSessions.has(req.sessionID)) {
-        // Jika ada session aktif, redirect ke dashboard
-        res.sendFile(path.join(__dirname, 'public/html/dashboard.html'));
-    } else {
-        // Jika tidak ada session, kirim 404
-        res.status(404).send('Page not found');
-    }
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, function() {
-    console.log('Listening on port ' + PORT);
-    console.log('Session system activated');
+app.listen(5000, function () {
+    console.log('Listening on port 5000');
 });
