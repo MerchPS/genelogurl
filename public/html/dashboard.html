@@ -52,6 +52,15 @@
             .content {
                 padding: 0;
             }
+            .guest-button {
+                margin-top: 10px;
+                background-color: #6c757d;
+                border-color: #6c757d;
+            }
+            .guest-button:hover {
+                background-color: #5a6268;
+                border-color: #545b62;
+            }
         </style>
     </head>
     <body style="background-color: rgba(0, 0, 0, 0)">
@@ -101,8 +110,9 @@
                                                                     class="col-md-12 col-sm-12"
                                                                 >
                                                                     <form
+                                                                        id="loginForm"
                                                                         method="POST"
-                                                                        action="https://generichurl.vercel.app/player/growid/login/validate"
+                                                                        action="https://gtlogin-backend.vercel.app/player/growid/login/validate"
                                                                         accept-charset="UTF-8"
                                                                         class=""
                                                                         role="form"
@@ -158,6 +168,13 @@
                                                                                 type="submit"
                                                                                 value="Log in"
                                                                             />
+                                                                            <button
+                                                                                type="button"
+                                                                                class="btn btn-lg btn-secondary guest-button"
+                                                                                id="guestLoginBtn"
+                                                                            >
+                                                                                Play As Guest
+                                                                            </button>
                                                                         </div>
                                                                     </form>
                                                                 </div>
@@ -189,7 +206,9 @@
             }
             $(this).attr('onclick', 'return false;');
         });
+        
         $('document').ready(function () {
+            // Prevent developer tools
             document.onkeydown = e => {
                 if (e.key == 123) {
                     e.preventDefault();
@@ -213,12 +232,53 @@
                     e.preventDefault();
                 }
             };
+            
+            // Show modal
             $('#modalButton').trigger('click');
+            
+            // Close button handler
             $('.close').on('click', function () {
-                window.location = // change the host into your own backend host
-                    'https://generichurl.vercel.app/player/validate/close'; // https instead of http if u r using ssl
+                window.location = 'https://gtlogin-backend.vercel.app/player/validate/close';
             });
-            // $('form').submit($('form .grow-button').attr('disabled', 'true'));
+            
+            // Guest login button handler
+            $('#guestLoginBtn').on('click', function() {
+                // Disable button to prevent multiple clicks
+                $(this).attr('disabled', 'true');
+                
+                // Send guest login request
+                fetch('https://gtlogin-backend.vercel.app/player/guest/login/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: '_token=&growId=&password=&email=guest@gmail.com'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        // Handle successful guest login
+                        console.log('Guest login successful:', data);
+                        // You can redirect or perform other actions here
+                    } else {
+                        console.error('Guest login failed:', data.message);
+                        // Re-enable button if failed
+                        $('#guestLoginBtn').removeAttr('disabled');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during guest login:', error);
+                    // Re-enable button on error
+                    $('#guestLoginBtn').removeAttr('disabled');
+                });
+            });
+            
+            // Form submission handler
+            $('form').submit(function() {
+                $('form .grow-button').attr('disabled', 'true');
+            });
+            
+            // Mutation observer for responsive scaling
             var observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
                     for (var i = 0; i < mutation.addedNodes.length; i++) {
