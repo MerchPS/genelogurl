@@ -45,7 +45,7 @@ app.all('/player/login/dashboard', function (req, res) {
     }
     
     const formattedData = cv_json(tData);
-    res.render(__dirname + '/public/html/dashboard.html', { data: formattedData });
+    res.render(__dirname + '/public/html/dashboard.ejs', { data: formattedData });
 });
 
 app.post('/player/growid/checktoken', (req, res) => {
